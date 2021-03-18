@@ -59,30 +59,23 @@ def show_melon(melon_id):
 @app.route("/cart")
 def show_shopping_cart():
     """Display content of shopping cart."""
-    melon_list =[]
-    total_cost = 0
-    
-    return render_template("cart.html")
-    # TODO: Display the contents of the shopping cart.
 
-    # The logic here will be something like:
-    #
-    # - get the cart dictionary from the session
-    # - create a list to hold melon objects and a variable to hold the total
-    #   cost of the order
-    # - loop over the cart dictionary, and for each melon id:
-    #    - get the corresponding Melon object
-    #    - compute the total cost for that type of melon
-    #    - add this to the order total
-    #    - add quantity and total cost as attributes on the Melon object
-    #    - add the Melon object to the list created above
-    # - pass the total order cost and the list of Melon objects to the template
-    #
+    melon_list =[]
+    order_total = 0
+    cart = session.get("cart", {})
+    for melon_id, quantity in cart.items():
+        melon = melons.get_by_id(melon_id)
+        total_cost = quantity * melon.price
+        order_total += total_cost
+        melon.quantity = quantity
+        melon.total_cost = total_cost
+        melon_list.append(melon)
+
+    return render_template("cart.html",
+                           cart=melon_list,
+                           order_total=order_total)
     # Make sure your function can also handle the case wherein no cart has
     # been added to the session
-
-    return render_template("cart.html")
-
 
 @app.route("/add_to_cart/<melon_id>")
 def add_to_cart(melon_id):
@@ -91,7 +84,13 @@ def add_to_cart(melon_id):
     When a melon is added to the cart, redirect browser to the shopping cart
     page and display a confirmation message: 'Melon successfully added to
     cart'."""
-
+    
+    if "cart" in session:
+        cart =session["cart"]
+    else:
+        cart = {}
+        cart[melon_id] = cart.get[melon_id, 0] +1
+    flash("Success!")
     # TODO: Finish shopping cart functionality
 
     # The logic here should be something like:
@@ -102,19 +101,18 @@ def add_to_cart(melon_id):
     # - increment the count for that melon id by 1
     # - flash a success message
     # - redirect the user to the cart page
-
-    return "Oops! This needs to be implemented!"
-
+    # Redirect to shopping cart page
+    return redirect("/cart")
 
 @app.route("/login", methods=["GET"])
 def show_login():
     """Show login form."""
-
     return render_template("login.html")
 
 
 @app.route("/login", methods=["POST"])
 def process_login():
+    
     """Log user into site.
 
     Find the user's login credentials located in the 'request.form'

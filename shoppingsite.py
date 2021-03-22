@@ -6,7 +6,7 @@ put melons in a shopping cart.
 Authors: Joel Burton, Christian Fernandez, Meggie Mahnken, Katie Byers.
 """
 
-from flask import Flask, session, render_template, redirect, flash
+from flask import Flask, session, render_template, redirect, flash, request
 import jinja2
 
 import melons
@@ -62,7 +62,11 @@ def show_shopping_cart():
 
     melon_list =[]
     order_total = 0
+    # username = session["user"]
     cart = session.get("cart", {})
+    # {'cart': {'cren': 3, 'water': 1,'winter':3, 'golden':1},
+    # 'user': 'marisa',
+    # 'fav_animal': 'cat'}
     for melon_id, quantity in cart.items():
         melon = melons.get_by_id(melon_id)
         total_cost = quantity * melon.price
@@ -84,12 +88,8 @@ def add_to_cart(melon_id):
     When a melon is added to the cart, redirect browser to the shopping cart
     page and display a confirmation message: 'Melon successfully added to
     cart'."""
-    
-    if "cart" in session:
-        cart =session["cart"]
-    else:
-        cart = {}
-        cart[melon_id] = cart.get[melon_id, 0] +1
+
+    session["cart"].setdefault("cart",[]).append(melon_id)
     flash("Success!")
     # TODO: Finish shopping cart functionality
 
@@ -105,9 +105,14 @@ def add_to_cart(melon_id):
     return redirect("/cart")
 
 @app.route("/login", methods=["GET"])
+
 def show_login():
     """Show login form."""
-    return render_template("login.html")
+    def show_login():
+        if 'logged_in_customer_email' not in session: 
+            return render_template("login.html")
+        flash("You are logged in")
+        return redirect("/melons")
 
 
 @app.route("/login", methods=["POST"])
@@ -118,22 +123,19 @@ def process_login():
     Find the user's login credentials located in the 'request.form'
     dictionary, look up the user, and store them in the session.
     """
+    username = request.form.get("username")
+    password  = request.form.get ("password")
 
-    # TODO: Need to implement this!
-
-    # The logic here should be something like:
-    #
-    # - get user-provided name and password from request.form
-    # - use customers.get_by_email() to retrieve corresponding Customer
-    #   object (if any)
-    # - if a Customer with that email was found, check the provided password
-    #   against the stored one
-    # - if they match, store the user's email in the session, flash a success
-    #   message and redirect the user to the "/melons" route
-    # - if they don't, flash a failure message and redirect back to "/login"
-    # - do the same if a Customer with that email doesn't exist
-
-    return "Oops! This needs to be implemented"
+    if username in customers and customers[email].pw == password:
+        session['logged_in_customer_email'] = email
+        flash("Success! You are logged in.")
+        return redirect("/melons")
+    elif email in customers and customers[email].pw != password:
+        flash("Incorrect password.")
+        return redirect("/login")
+    else:
+        flash("No such email.")
+        return redirect("/login")
 
 
 @app.route("/checkout")
